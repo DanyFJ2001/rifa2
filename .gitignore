@@ -1,0 +1,12 @@
+# Archivos de configuración con credenciales
+firebase-config.js
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno
+.env
+
+# Carpetas de dependencias
+node_modules/

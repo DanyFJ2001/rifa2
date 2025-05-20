@@ -1,6 +1,6 @@
 // script.js
 document.addEventListener('DOMContentLoaded', function() {
-
+    
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
