@@ -267,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+    
 
     function actualizarBarraProgreso(data) {
         if (!data) return;

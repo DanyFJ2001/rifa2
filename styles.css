@@ -7,6 +7,14 @@
     --color-secondary: #e60019;
     --color-accent: #e60019;
     --color-dark: #222;
+     --color-libre: #4CAF50;
+    --color-reservado: #FFC107;
+    --color-pagado: #2196F3;
+    --color-gray: #f5f5f5;
+    --color-gray-light: #f9f9f9;
+    --color-gray-dark: #e0e0e0;
+    --color-orange: #FF9800;
+    --color-danger: #f44336;
     --color-light: #ffffff;
     --color-gray: #f2f2f2;
     --color-orange: #FF9800;
@@ -3978,6 +3986,7 @@ img {
     white-space: nowrap;
     z-index: 10;
 }
+
 
 .numero.reservado:hover::before,
 .numero.pagado:hover::before {
