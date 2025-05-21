@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function enviarWhatsapp() {
         // Número de teléfono del organizador
-        const telefonoOrganizador = "593991234567"; // Ajusta este número según necesites
+        const telefonoOrganizador = "593967871708"; // Ajusta este número según necesites
 
         // Calcular total a pagar
         const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
