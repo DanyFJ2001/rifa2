@@ -17,13 +17,23 @@
 
 <body>
     <div class="landing-container">
+        <!-- Partículas de fondo -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- Nav con estructura específica -->
         <nav>
             <div class="logo-container">
                 <div class="logo-text">
                     COFRE DEL <span class="tesoro-highlight">TESORO</span>
                 </div>
-                <img src="https://i.pinimg.com/originals/59/3d/cd/593dcd770671cc503a0d413334e5c86c.gif" alt="Tesoro"
-                    class="treasure-gif">
+                <img src="https://i.pinimg.com/originals/59/3d/cd/593dcd770671cc503a0d413334e5c86c.gif"
+                    alt="Cofre del Tesoro" class="treasure-gif">
             </div>
         </nav>
         <!-- Sección con tres elementos completamente independientes -->
@@ -34,7 +44,12 @@
                     <h2 class="premio-titulo-principal">JUEGA</h2>
                     <h3 class="premio-subtitulo">SUZUKI FORSA 1</h3>
                     <p class="premio-actividad">CLÁSICO DE LOS 90's</p>
+                    <div class="boton-container">
+                    <a href="#" class="btn-participar pulse">¡Participar ahora!</a>
                 </div>
+                </div>
+
+                
 
                 <!-- ¡TRES CONTENEDORES INDEPENDIENTES! -->
 
@@ -44,7 +59,7 @@
                     <h2 class="garantia-titulo">GARANTÍA</h2>
                     <h2 class="garantia-titulo">DE:</h2>
                     <div class="garantia-linea"></div>
-                    
+
                 </div>
 
                 <!-- Contenedor 2: Solo para el carrusel -->
@@ -410,91 +425,107 @@
             </div>
         </section>
 
-        <!-- footer.component.html -->
-        <footer class="site-footer">
-            <div class="footer-wave">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-                    <path fill="#1e3160" fill-opacity="1"
-                        d="M0,64L48,80C96,96,192,128,288,138.7C384,149,480,139,576,128C672,117,768,107,864,122.7C960,139,1056,181,1152,170.7C1248,160,1344,96,1392,64L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
-                    </path>
-                </svg>
-            </div>
+       <!-- footer.component.html -->
+<footer class="site-footer">
+    <div class="footer-wave">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            <path fill="#1e3160" fill-opacity="1"
+                d="M0,64L48,80C96,96,192,128,288,138.7C384,149,480,139,576,128C672,117,768,107,864,122.7C960,139,1056,181,1152,170.7C1248,160,1344,96,1392,64L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+            </path>
+        </svg>
+    </div>
 
-            <div class="footer-main">
-                <div class="container">
-                    <div class="footer-content">
-                        <div class="footer-logo">
-                           
-                            <h3>JCAIZAS</h3>
-                        </div>
+    <div class="footer-main">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h3>JCAIZAS</h3>
+                    <p>Ofrecemos soluciones innovadoras y de calidad para satisfacer tus necesidades.</p>
+                </div>
 
-                        <div class="footer-links">
-                            <div class="links-column">
-                                <h4>Navegación</h4>
-                                <ul>
-                                    <li><a href="#">Inicio</a></li>
-
-                                </ul>
-                            </div>
-
-                            <div class="links-column">
-
-                            </div>
-
-
-
-                            <div class="links-column contact-column">
-                                <h4>Contacto</h4>
-                                <ul>
-                                    <li>
-                                        <i class="fas fa-phone"></i>
-                                        <span> 0983095560 / 098 621 2699</span>
-                                    </li>
-                                    <li>
-                                        <i class="fas fa-envelope"></i>
-                                        <span>jcaizasmatriz@gmail.com</span>
-                                    </li>
-                                </ul>
-                            </div>
+                <div class="footer-links">
+                    <div class="links-column">
+                        <h4>Navegación</h4>
+                        <ul>
+                            <li><a href="#">Inicio</a></li>
+                            <li><a href="#">Servicios</a></li>
+                            <li><a href="#">Productos</a></li>
+                            <li><a href="#">Acerca de</a></li>
+                            <li><a href="#">Contacto</a></li>
+                        </ul>
+                    </div>
+                    <div class="links-column">
+                        <h4>Servicios</h4>
+                        <ul>
+                            <li><a href="#">Servicio 1</a></li>
+                            <li><a href="#">Servicio 2</a></li>
+                            <li><a href="#">Servicio 3</a></li>
+                        </ul>
+                    </div>
+                    <div class="links-column contact-column">
+                        <h4>Contacto</h4>
+                        <ul>
+                            <li>
+                                <i class="fas fa-phone"></i>
+                                <span>0983095560 / 098 621 2699</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-envelope"></i>
+                                <span>jcaizasmatriz@gmail.com</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Quito, Ecuador</span>
+                            </li>
+                        </ul>
+                        
+                        <div class="newsletter">
+                            <h5>Suscríbete a nuestro boletín</h5>
+                            <form class="newsletter-form">
+                                <input type="email" placeholder="Tu correo electrónico" required>
+                                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="footer-bottom">
-                <div class="container">
-                    <div class="footer-bottom-content">
-                        <div class="social-icons">
-                            <a href="https://www.facebook.com/x3Jcaiza?locale=es_LA" aria-label="Facebook"
-                                class="social-icon">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="https://www.instagram.com/jcaizas1/?hl=es-la" aria-label="Instagram"
-                                class="social-icon">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                            <a href="https://www.tiktok.com/@jcaizas" aria-label="TikTok" class="social-icon">
-                                <i class="fab fa-tiktok"></i>
-                        </div>
-
-                        <div class="copyright">
-                            <p>&copy; 2025 JCAIZAS. Todos los derechos reservados.</p>
-                        </div>
-                    </div>
+    <div class="footer-bottom">
+        <div class="container">
+            <div class="footer-bottom-content">
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/x3Jcaiza?locale=es_LA" aria-label="Facebook"
+                        class="social-icon">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://www.instagram.com/jcaizas1/?hl=es-la" aria-label="Instagram"
+                        class="social-icon">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://www.tiktok.com/@jcaizas" aria-label="TikTok" class="social-icon">
+                        <i class="fab fa-tiktok"></i>
+                    </a>
+                </div>
+                <div class="copyright">
+                    <p>&copy; 2025 JCAIZAS. Todos los derechos reservados.</p>
                 </div>
             </div>
-        </footer>
-    
+        </div>
+    </div>
+</footer>
 
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <!-- Script principal -->
-    <script src="script.js"></script>
-    <script src="responsive.js"></script>
-    <script src="firebase-config.js"></script>
+        <!-- Firebase -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+        <!-- Script principal -->
+        <script src="script.js"></script>
+        <script src="responsive.js"></script>
+        <script src="firebase-config.js"></script>
 
 </body>
 

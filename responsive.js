@@ -351,3 +351,16 @@ function handleResponsiveAdjustments() {
         }
     }
 }
+
+// Llamar a la función después de que cargue la página
+window.addEventListener('load', createParticles);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const botonParticipar = document.querySelector('.btn-participar');
+    const formContainer = document.querySelector('.form-container');
+    
+    botonParticipar.addEventListener('click', function(e) {
+        e.preventDefault();
+        formContainer.scrollIntoView({ behavior: 'smooth' });
+    });
+});
