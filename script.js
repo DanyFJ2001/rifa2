@@ -1,4 +1,4 @@
-// script.js
+// script.js - Modificado para números del 2001 al 4000
 document.addEventListener('DOMContentLoaded', function () {
 
     // Inicializar Firebase
@@ -19,7 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedList = document.getElementById('selected-list');
     const totalPagar = document.getElementById('total-pagar');
 
-    // Variables globales
+    // Variables globales - MODIFICADAS PARA RANGO 2001-4000
+    const NUMERO_INICIAL = 2001;
+    const NUMERO_FINAL = 4000;
+    const TOTAL_NUMEROS = NUMERO_FINAL - NUMERO_INICIAL + 1; // 2000 números total
+    
     let datosUsuario = {
         nombre: '',
         telefono: '',
@@ -149,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Funciones
     function initCountdown() {
         // Fecha del sorteo (ajustar según necesidades)
-        const countDownDate = new Date("June 30, 2025 19:00:00").getTime(); // Usa la fecha que aparece en tu HTML
+        const countDownDate = new Date("June 30, 2025 19:00:00").getTime();
 
         // Actualizar cada segundo
         const x = setInterval(function () {
@@ -195,12 +199,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // FUNCIÓN MODIFICADA: Generar números del 2001 al 4000
     function generarNumeros() {
         // Limpiar grid
         gridNumeros.innerHTML = '';
 
-        // Generar 100 números
-        for (let i = 1; i <= 100; i++) {
+        // Generar números del 2001 al 4000
+        for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
             const numeroElement = document.createElement('div');
             numeroElement.classList.add('numero');
             numeroElement.textContent = i;
@@ -220,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!data) {
                 // Si no hay datos, inicializa todos los números
                 const batch = {};
-                for (let i = 1; i <= 100; i++) {
+                for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
                     batch[i] = {
                         estado: 'libre',
                         usuario: null,
@@ -231,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 numerosRef.set(batch);
             } else {
                 // Si ya hay datos, verifica que todos los números existan
-                for (let i = 1; i <= 100; i++) {
+                for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
                     if (!data[i]) {
                         numerosRef.child(i).set({
                             estado: 'libre',
@@ -268,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-
+    // FUNCIÓN MODIFICADA: Actualizar progreso con el nuevo total de números
     function actualizarBarraProgreso(data) {
         if (!data) return;
 
@@ -282,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Calcular porcentaje total vendido (reservados + pagados)
-        const total = 100; // Total de números
+        const total = TOTAL_NUMEROS; // Total de números (2000)
         const vendidos = reservados + pagados;
         const porcentaje = (vendidos / total) * 100;
 
@@ -421,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function enviarWhatsapp() {
         // Número de teléfono del organizador
-        const telefonoOrganizador = "593967871708"; // Ajusta este número según necesites
+        const telefonoOrganizador = "593967871708";
 
         // Calcular total a pagar
         const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
@@ -556,6 +561,7 @@ Adjunto comprobante de pago.`;
     `;
     document.head.appendChild(style);
 });
+
 // Funcionalidad para los modales
 document.addEventListener('DOMContentLoaded', function () {
     // Referencias a elementos de modales
@@ -603,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // Crear partículas adicionales aleatoriamente
 function createParticles() {
     const particlesContainer = document.querySelector('.particles');
-    const numberOfParticles = 15; // Número adicional de partículas
+    const numberOfParticles = 15;
 
     for (let i = 0; i < numberOfParticles; i++) {
         const particle = document.createElement('div');
@@ -634,4 +640,3 @@ function createParticles() {
         particlesContainer.appendChild(particle);
     }
 }
-
