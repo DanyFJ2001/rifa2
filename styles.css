@@ -365,7 +365,178 @@ nav:hover .treasure-gif {
     animation: float 22s linear infinite;
     animation-delay: 10s;
 }
+.sello-frase {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e60019;
+    text-align: center;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    width: 170px;
+    white-space: nowrap;
+    overflow: visible;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: glowSelloTexto 2s infinite alternate;
+}
 
+@keyframes glowSelloTexto {
+    0% {
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    100% {
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(230, 0, 25, 0.3);
+    }
+}
+
+/* Ajustes específicos para móviles */
+@media screen and (max-width: 992px) {
+    /* Ajustes para el contenedor cuando está en posición estática en móviles */
+    .contenedor-imagen {
+        position: static;
+        width: 100%;
+        max-width: 170px;
+        margin: 20px auto;
+        text-align: center;
+        padding-bottom: 30px;
+    }
+    
+    /* Ajustes para la imagen */
+    .sello-img {
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    /* Ajustes para la frase */
+    .sello-frase {
+        font-size: 11px;
+        width: 100%;
+        position: static;
+        transform: none;
+        left: auto;
+        margin-top: 10px;
+        white-space: normal; /* Permitimos que se divida en dos líneas si es necesario en móviles */
+        max-width: 270px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+/* Contenedor para los botones de redes sociales */
+.social-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Estilos base para los botones */
+.transmision-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.transmision-button i {
+    font-size: 1.1rem;
+}
+
+/* TikTok button */
+.tiktok-btn {
+    background: linear-gradient(90deg, #000000, #25F4EE);
+    border: none;
+}
+
+.tiktok-btn:hover {
+    background: linear-gradient(90deg, #000000, #00d8cf);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Instagram button */
+.instagram-btn {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    border: none;
+}
+
+.instagram-btn:hover {
+    background: linear-gradient(45deg, #e5893b 0%, #d45f35 25%, #c9243c 50%, #b9205c 75%, #a8157c 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(220, 39, 67, 0.3);
+}
+
+/* Facebook button */
+.facebook-btn {
+    background-color: #3b5998;
+    border: none;
+}
+
+.facebook-btn:hover {
+    background-color: #344e86;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(59, 89, 152, 0.3);
+}
+
+/* Media queries para responsividad */
+@media screen and (max-width: 768px) {
+    .transmision-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .social-buttons-group {
+        gap: 8px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .transmision-button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .social-buttons-group {
+        gap: 6px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .contenedor-imagen {
+        max-width: 150px;
+    }
+    
+    .sello-frase {
+        font-size: 10px;
+        max-width: 150px;
+    }
+}
+
+/* Para dispositivos muy pequeños */
+@media screen and (max-width: 360px) {
+    .contenedor-imagen {
+        max-width: 130px;
+    }
+    
+    .sello-frase {
+        font-size: 9px;
+        max-width: 130px;
+    }
+}
 @keyframes float {
     0% {
         transform: translate(0, 0) scale(1);
