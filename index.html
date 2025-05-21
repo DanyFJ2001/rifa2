@@ -243,17 +243,15 @@
                         <input type="email" id="email" placeholder="Ej. tumail@ejemplo.com">
                     </div>
 
-                    <div class="form-group">
-                        <label for="numeros">Números seleccionados</label>
-                        <input type="text" id="numeros" placeholder="Selecciona en el siguiente paso" readonly>
-                    </div>
+                   <div class="form-group">
+    <label for="numeros">Números seleccionados</label>
+    <input type="text" id="numeros" value="⚠️ Por favor haz clic en 'Continuar' para seleccionar tus números" class="form-control" readonly disabled style="background-color: #f8f9fa; color: #6c757d; border: 1px dashed #ced4da;">
+    <small class="form-text text-muted">Este campo se completará automáticamente en el siguiente paso.</small>
+</div>
 
                     <button id="btn-siguiente" class="btn-primary">CONTINUAR</button>
 
-                    <div class="form-footer">
-                        <p>Al participar aceptas los <a href="#" id="open-terms-modal">términos y condiciones</a> del
-                            sorteo y nuestra <a href="#" id="open-privacy-modal">política de privacidad</a></p>
-                    </div>
+                  
                 </div>
 
                 <div class="form-container" id="form-step-2" style="display: none;">
