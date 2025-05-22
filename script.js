@@ -1,4 +1,4 @@
-// script.js - Modificado para números del 2001 al 4000
+// script.js - Versión SIN bloqueos de seguridad (para pruebas)
 document.addEventListener('DOMContentLoaded', function () {
 
     // Inicializar Firebase
@@ -19,11 +19,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedList = document.getElementById('selected-list');
     const totalPagar = document.getElementById('total-pagar');
 
-    // Variables globales - MODIFICADAS PARA RANGO 2001-4000
+    // Variables globales
     const NUMERO_INICIAL = 2001;
     const NUMERO_FINAL = 4000;
-    const TOTAL_NUMEROS = NUMERO_FINAL - NUMERO_INICIAL + 1; // 2000 números total
-    
+    const TOTAL_NUMEROS = NUMERO_FINAL - NUMERO_INICIAL + 1;
     let datosUsuario = {
         nombre: '',
         telefono: '',
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Limitar a 10 números seleccionados
     const MAX_NUMEROS = 10;
-    const PRECIO_NUMERO = 3.00; // Precio por número
+    const PRECIO_NUMERO = 3.00;
 
     // Inicializar cuenta regresiva
     initCountdown();
@@ -44,32 +43,34 @@ document.addEventListener('DOMContentLoaded', function () {
     // Escuchar cambios en la base de datos
     numerosRef.on('value', (snapshot) => {
         actualizarNumeros(snapshot.val());
-
-        // Actualizar la barra de progreso
         actualizarBarraProgreso(snapshot.val());
     });
 
-    // Event Listeners
-    btnSiguiente.addEventListener('click', function () {
-        // Validar datos del formulario
-        const nombre = document.getElementById('nombre').value;
-        const telefono = document.getElementById('telefono').value;
-        const email = document.getElementById('email').value;
+    // EVENT LISTENERS SIN BLOQUEOS DE SEGURIDAD
 
+    btnSiguiente.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        // Obtener datos simples
+        const nombre = document.getElementById('nombre').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const email = document.getElementById('email').value.trim();
+
+        // Validación básica sin bloqueos
         if (!nombre || !telefono || !email) {
             alert('Por favor, completa todos los campos');
             return;
         }
 
-        // Validación básica de email
-        if (!validarEmail(email)) {
+        // Validación simple de email
+        if (!email.includes('@') || !email.includes('.')) {
             alert('Por favor, ingresa un email válido');
             return;
         }
 
-        // Validación básica de teléfono
-        if (!validarTelefono(telefono)) {
-            alert('Por favor, ingresa un número de teléfono válido (ejemplo: 0991234567)');
+        // Validación simple de teléfono
+        if (telefono.length < 8) {
+            alert('Por favor, ingresa un número de teléfono válido');
             return;
         }
 
@@ -78,101 +79,87 @@ document.addEventListener('DOMContentLoaded', function () {
         datosUsuario.telefono = telefono;
         datosUsuario.email = email;
 
-        // Cambiar al paso 2 con animación
-        formStep1.style.animation = 'fadeOut 0.3s forwards';
-        setTimeout(() => {
-            formStep1.style.display = 'none';
-            formStep2.style.display = 'block';
-            formStep2.style.animation = 'fadeIn 0.3s forwards';
-        }, 300);
+        console.log('Datos guardados:', datosUsuario);
+
+        // Cambiar al paso 2 SIN BLOQUEOS
+        transitionToStep(formStep1, formStep2);
     });
 
-    btnVolver.addEventListener('click', function () {
-        // Cambiar al paso 1 con animación
-        formStep2.style.animation = 'fadeOut 0.3s forwards';
-        setTimeout(() => {
-            formStep2.style.display = 'none';
-            formStep1.style.display = 'block';
-            formStep1.style.animation = 'fadeIn 0.3s forwards';
-        }, 300);
+    btnVolver.addEventListener('click', function (e) {
+        e.preventDefault();
+        transitionToStep(formStep2, formStep1);
     });
 
-    btnConfirmar.addEventListener('click', function () {
+    btnConfirmar.addEventListener('click', async function (e) {
+        e.preventDefault();
+        
         if (datosUsuario.numerosSeleccionados.length === 0) {
             alert('Por favor, selecciona al menos un número');
             return;
         }
 
-        // Verificar que los números siguen disponibles
-        verificarNumerosDisponibles()
-            .then(disponibles => {
-                if (!disponibles) {
-                    // Si algún número ya no está disponible, actualizar la interfaz
-                    actualizarNumerosSeleccionados();
-                    throw new Error('Algunos números ya no están disponibles. Por favor, selecciona otros.');
-                }
+        // Mostrar loading
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'PROCESANDO...';
 
-                // Si todos están disponibles, reservarlos
-                return reservarNumeros();
-            })
-            .then(() => {
-                // Calcular total a pagar
+        try {
+            // Reservar números
+            const success = await reservarNumeros();
+            
+            if (success) {
                 const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
                 totalPagar.textContent = total.toFixed(2);
-
-                // Cambiar al paso 3 con animación
-                formStep2.style.animation = 'fadeOut 0.3s forwards';
-                setTimeout(() => {
-                    formStep2.style.display = 'none';
-                    formStep3.style.display = 'block';
-                    formStep3.style.animation = 'fadeIn 0.3s forwards';
-                }, 300);
-            })
-            .catch(error => {
-                console.error("Error al reservar números:", error);
-                alert(error.message || 'Error al reservar números. Inténtalo de nuevo.');
-            });
+                transitionToStep(formStep2, formStep3);
+            } else {
+                alert('Algunos números ya no están disponibles. La página se actualizará.');
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        } catch (error) {
+            console.error('Error en reserva:', error);
+            alert('Error al procesar la reserva. Intenta nuevamente.');
+        } finally {
+            btnConfirmar.disabled = false;
+            btnConfirmar.textContent = 'CONFIRMAR';
+        }
     });
 
-    btnWhatsapp.addEventListener('click', function () {
+    btnWhatsapp.addEventListener('click', function (e) {
+        e.preventDefault();
         enviarWhatsapp();
     });
 
-    // Funciones para validación
-    function validarEmail(email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
+    // FUNCIONES SIN BLOQUEOS
+
+    function transitionToStep(fromStep, toStep) {
+        console.log('Cambiando de paso:', fromStep.id, 'a', toStep.id);
+        
+        fromStep.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => {
+            fromStep.style.display = 'none';
+            toStep.style.display = 'block';
+            toStep.style.animation = 'fadeIn 0.3s forwards';
+            
+            console.log('Transición completada a:', toStep.id);
+        }, 300);
     }
 
-    function validarTelefono(telefono) {
-        // Validación para números de Ecuador (09 seguido de 8 dígitos)
-        const re = /^(09|9)[0-9]{8}$/;
-        return re.test(telefono);
-    }
-
-    // Funciones
     function initCountdown() {
-        // Fecha del sorteo (ajustar según necesidades)
         const countDownDate = new Date("June 30, 2025 19:00:00").getTime();
 
-        // Actualizar cada segundo
         const x = setInterval(function () {
             const now = new Date().getTime();
             const distance = countDownDate - now;
 
-            // Cálculos de tiempo
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            // Mostrar resultado con animación
-            updateCountdownDigit("days", days);
-            updateCountdownDigit("hours", hours);
-            updateCountdownDigit("minutes", minutes);
-            updateCountdownDigit("seconds", seconds);
+            updateCountdownDigit("days", Math.max(0, days));
+            updateCountdownDigit("hours", Math.max(0, hours));
+            updateCountdownDigit("minutes", Math.max(0, minutes));
+            updateCountdownDigit("seconds", Math.max(0, seconds));
 
-            // Cuando termina la cuenta regresiva
             if (distance < 0) {
                 clearInterval(x);
                 document.getElementById("days").textContent = "00";
@@ -183,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 1000);
     }
 
-    // Función para actualizar dígitos con animación
     function updateCountdownDigit(id, value) {
         const element = document.getElementById(id);
         if (!element) return;
@@ -193,25 +179,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (currentValue !== newValue) {
             element.style.animation = 'none';
-            element.offsetHeight; // Trigger reflow
+            element.offsetHeight;
             element.textContent = newValue;
             element.style.animation = 'fadeNumberChange 0.5s';
         }
     }
 
-    // FUNCIÓN MODIFICADA: Generar números del 2001 al 4000
     function generarNumeros() {
-        // Limpiar grid
         gridNumeros.innerHTML = '';
 
-        // Generar números del 2001 al 4000
         for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
             const numeroElement = document.createElement('div');
             numeroElement.classList.add('numero');
             numeroElement.textContent = i;
             numeroElement.setAttribute('data-numero', i);
 
-            // Evento click para seleccionar número
             numeroElement.addEventListener('click', function () {
                 seleccionarNumero(this);
             });
@@ -223,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
         numerosRef.once('value', snapshot => {
             const data = snapshot.val();
             if (!data) {
-                // Si no hay datos, inicializa todos los números
                 const batch = {};
                 for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
                     batch[i] = {
@@ -234,84 +215,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
                 }
                 numerosRef.set(batch);
-            } else {
-                // Si ya hay datos, verifica que todos los números existan
-                for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
-                    if (!data[i]) {
-                        numerosRef.child(i).set({
-                            estado: 'libre',
-                            usuario: null,
-                            telefono: null,
-                            email: null
-                        });
-                    }
-                }
             }
         });
     }
 
-    function actualizarNumeros(data) {
-        if (!data) return;
-
-        // Actualizar el estado de cada número en el DOM
-        for (const num in data) {
-            const numeroElement = document.querySelector(`.numero[data-numero="${num}"]`);
-            if (numeroElement) {
-                // Limpiar clases previas de estado
-                numeroElement.classList.remove('libre', 'reservado', 'pagado');
-
-                // Añadir clase según estado
-                numeroElement.classList.add(data[num].estado);
-
-                // Activar/desactivar interacción según estado
-                if (data[num].estado !== 'libre') {
-                    numeroElement.style.cursor = 'not-allowed';
-                } else {
-                    numeroElement.style.cursor = 'pointer';
-                }
-            }
-        }
-    }
-    
-    // FUNCIÓN MODIFICADA: Actualizar progreso con el nuevo total de números
-    function actualizarBarraProgreso(data) {
-        if (!data) return;
-
-        let reservados = 0;
-        let pagados = 0;
-
-        // Contar números reservados y pagados
-        for (const num in data) {
-            if (data[num].estado === 'reservado') reservados++;
-            if (data[num].estado === 'pagado') pagados++;
-        }
-
-        // Calcular porcentaje total vendido (reservados + pagados)
-        const total = TOTAL_NUMEROS; // Total de números (2000)
-        const vendidos = reservados + pagados;
-        const porcentaje = (vendidos / total) * 100;
-
-        // Actualizar el ancho de la barra de progreso
-        const progressBar = document.querySelector('.progreso');
-        const progressMarker = document.querySelector('.progreso-marker');
-
-        if (progressBar && progressMarker) {
-            progressBar.style.width = `${porcentaje}%`;
-            progressMarker.style.left = `${porcentaje}%`;
-
-            // Actualizar texto del porcentaje
-            const porcentajeText = document.querySelector('.porcentaje-text strong');
-            if (porcentajeText) {
-                porcentajeText.textContent = `${porcentaje.toFixed(2)}%`;
-            }
-        }
-    }
-
     function seleccionarNumero(elemento) {
-        // Obtener número
-        const numero = elemento.getAttribute('data-numero');
+        const numero = parseInt(elemento.getAttribute('data-numero'));
 
-        // Verificar si el número está libre
+        // Verificar si el número está disponible
         if (elemento.classList.contains('reservado') || elemento.classList.contains('pagado')) {
             alert('Este número ya no está disponible');
             return;
@@ -341,11 +252,56 @@ document.addEventListener('DOMContentLoaded', function () {
         actualizarListaSeleccionados();
     }
 
+    function actualizarNumeros(data) {
+        if (!data) return;
+
+        for (const num in data) {
+            const numeroElement = document.querySelector(`.numero[data-numero="${num}"]`);
+            if (numeroElement) {
+                numeroElement.classList.remove('libre', 'reservado', 'pagado');
+                numeroElement.classList.add(data[num].estado);
+
+                if (data[num].estado !== 'libre') {
+                    numeroElement.style.cursor = 'not-allowed';
+                } else {
+                    numeroElement.style.cursor = 'pointer';
+                }
+            }
+        }
+    }
+
+    function actualizarBarraProgreso(data) {
+        if (!data) return;
+
+        let reservados = 0;
+        let pagados = 0;
+
+        for (const num in data) {
+            if (data[num].estado === 'reservado') reservados++;
+            if (data[num].estado === 'pagado') pagados++;
+        }
+
+        const total = TOTAL_NUMEROS;
+        const vendidos = reservados + pagados;
+        const porcentaje = (vendidos / total) * 100;
+
+        const progressBar = document.querySelector('.progreso');
+        const progressMarker = document.querySelector('.progreso-marker');
+
+        if (progressBar && progressMarker) {
+            progressBar.style.width = `${porcentaje}%`;
+            progressMarker.style.left = `${porcentaje}%`;
+
+            const porcentajeText = document.querySelector('.porcentaje-text strong');
+            if (porcentajeText) {
+                porcentajeText.textContent = `${porcentaje.toFixed(2)}%`;
+            }
+        }
+    }
+
     function actualizarListaSeleccionados() {
-        // Ordenar números
         datosUsuario.numerosSeleccionados.sort((a, b) => a - b);
 
-        // Actualizar inputs
         if (selectedList) {
             selectedList.textContent = datosUsuario.numerosSeleccionados.join(', ');
         }
@@ -353,195 +309,154 @@ document.addEventListener('DOMContentLoaded', function () {
             numeroSeleccionadoInput.value = datosUsuario.numerosSeleccionados.join(', ');
         }
 
-        // Calcular total
         const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
         if (totalPagar) {
             totalPagar.textContent = total.toFixed(2);
         }
     }
 
-    function verificarNumerosDisponibles() {
-        return numerosRef.once('value')
-            .then(snapshot => {
-                const data = snapshot.val();
-                if (!data) return true;
-
-                let todosDisponibles = true;
-                const numerosNoDisponibles = [];
-
-                datosUsuario.numerosSeleccionados.forEach(numero => {
-                    if (data[numero] && data[numero].estado !== 'libre') {
-                        todosDisponibles = false;
-                        numerosNoDisponibles.push(numero);
-
-                        // Quitar de la selección del usuario
-                        const index = datosUsuario.numerosSeleccionados.indexOf(numero);
-                        if (index > -1) {
-                            datosUsuario.numerosSeleccionados.splice(index, 1);
-                        }
-                    }
-                });
-
-                if (!todosDisponibles) {
-                    alert(`Los números ${numerosNoDisponibles.join(', ')} ya no están disponibles y han sido quitados de tu selección.`);
+    async function reservarNumeros() {
+        console.log('Iniciando reserva para números:', datosUsuario.numerosSeleccionados);
+        
+        const reservationPromises = datosUsuario.numerosSeleccionados.map(numero => {
+            return numerosRef.child(numero).transaction(currentData => {
+                if (currentData === null || currentData.estado === 'libre') {
+                    return {
+                        estado: 'reservado',
+                        usuario: datosUsuario.nombre,
+                        telefono: datosUsuario.telefono,
+                        email: datosUsuario.email,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    };
+                } else {
+                    return; // undefined = abortar
                 }
-
-                return todosDisponibles;
             });
-    }
-
-    function actualizarNumerosSeleccionados() {
-        // Limpiar todas las selecciones
-        const numerosElements = document.querySelectorAll('.numero');
-        numerosElements.forEach(elem => {
-            elem.classList.remove('selected');
         });
 
-        // Re-aplicar selecciones actualizadas
-        datosUsuario.numerosSeleccionados.forEach(numero => {
-            const elem = document.querySelector(`.numero[data-numero="${numero}"]`);
-            if (elem) {
-                elem.classList.add('selected');
+        try {
+            const results = await Promise.all(reservationPromises);
+            
+            const allSuccessful = results.every(result => 
+                result.committed && result.snapshot.exists()
+            );
+
+            if (!allSuccessful) {
+                console.warn('Algunas reservas fallaron');
+                return false;
             }
-        });
 
-        // Actualizar lista
-        actualizarListaSeleccionados();
-    }
+            console.log('Reserva exitosa');
+            return true;
 
-    function reservarNumeros() {
-        // Crear array de promesas para todas las actualizaciones
-        const promises = datosUsuario.numerosSeleccionados.map(numero => {
-            return numerosRef.child(numero).update({
-                estado: 'reservado',
-                usuario: datosUsuario.nombre,
-                telefono: datosUsuario.telefono,
-                email: datosUsuario.email,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-        });
-
-        return Promise.all(promises);
-    }
-
-    function enviarWhatsapp() {
-        // Número de teléfono del organizador
-        const telefonoOrganizador = "593967871708";
-
-        // Calcular total a pagar
-        const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
-
-        // Construir mensaje
-        const mensaje = `¡Hola! He reservado los siguientes números para la rifa del Suzuki Forsa 1: ${datosUsuario.numerosSeleccionados.join(', ')}. 
-Mi nombre es ${datosUsuario.nombre}, 
-Mi teléfono es ${datosUsuario.telefono} 
-Mi email es ${datosUsuario.email}. 
-Total a pagar: $${total.toFixed(2)}. 
-Adjunto comprobante de pago.`;
-
-        // Construir URL de WhatsApp
-        const whatsappUrl = `https://wa.me/${telefonoOrganizador}?text=${encodeURIComponent(mensaje)}`;
-
-        // Abrir WhatsApp en nueva pestaña
-        window.open(whatsappUrl, '_blank');
-    }
-
-    // Funcionalidad del carrusel mejorado
-    const slides = document.querySelectorAll('.carrusel-slide');
-    const indicators = document.querySelectorAll('.indicador');
-    const prevBtn = document.querySelector('.carrusel-prev');
-    const nextBtn = document.querySelector('.carrusel-next');
-
-    let currentIndex = 0;
-    let slideInterval;
-
-    // Inicializar el carrusel
-    initCarousel();
-
-    function initCarousel() {
-        if (!slides.length) return;
-
-        // Preparar las posiciones iniciales de los slides
-        updateSlides();
-
-        // Iniciar el deslizamiento automático
-        startAutoSlide();
-
-        // Agregar eventos a los controles
-        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-
-        // Eventos para los indicadores
-        indicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', () => goToSlide(index));
-        });
-
-        // Pausar la reproducción automática al pasar el mouse por encima
-        const carruselPremio = document.querySelector('.carrusel-premio');
-        if (carruselPremio) {
-            carruselPremio.addEventListener('mouseenter', stopAutoSlide);
-            carruselPremio.addEventListener('mouseleave', startAutoSlide);
+        } catch (error) {
+            console.error('Error en transacciones:', error);
+            return false;
         }
     }
 
-    function updateSlides() {
+    function enviarWhatsapp() {
+        const telefonoOrganizador = "593967871708";
+        const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
+        
+        const mensaje = `🎟️ RESERVA DE NÚMEROS - SUZUKI FORSA 1
+
+👤 Datos del participante:
+• Nombre: ${datosUsuario.nombre}
+• Teléfono: ${datosUsuario.telefono}
+• Email: ${datosUsuario.email}
+
+🎯 Números reservados: ${datosUsuario.numerosSeleccionados.join(', ')}
+💰 Total a pagar: $${total.toFixed(2)}
+
+📋 Detalles de pago:
+• Banco: Pichincha
+• Cuenta: 2211646347
+• Titular: Julissa Mishel Caiza
+
+✅ Adjunto comprobante de pago.`;
+
+        const whatsappUrl = `https://wa.me/${telefonoOrganizador}?text=${encodeURIComponent(mensaje)}`;
+        window.open(whatsappUrl, '_blank');
+    }
+
+    // Carrusel
+    initCarrusel();
+
+    function initCarrusel() {
+        const slides = document.querySelectorAll('.carrusel-slide');
+        const indicators = document.querySelectorAll('.indicador');
+        const prevBtn = document.querySelector('.carrusel-prev');
+        const nextBtn = document.querySelector('.carrusel-next');
+
         if (!slides.length) return;
 
-        slides.forEach((slide, index) => {
-            slide.classList.remove('active', 'prev');
+        let currentIndex = 0;
+        let slideInterval;
 
-            if (index === currentIndex) {
-                slide.classList.add('active');
-            } else if (index === getPrevIndex()) {
-                slide.classList.add('prev');
-            }
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentIndex) {
+                    slide.classList.add('active');
+                } else if (index === getPrevIndex()) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % slides.length;
+            updateSlides();
+        }
+
+        function prevSlide() {
+            currentIndex = getPrevIndex();
+            updateSlides();
+        }
+
+        function getPrevIndex() {
+            return (currentIndex - 1 + slides.length) % slides.length;
+        }
+
+        function startAutoSlide() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        if (prevBtn) prevBtn.addEventListener('click', () => {
+            prevSlide();
+            startAutoSlide();
         });
 
-        // Actualizar indicadores
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            nextSlide();
+            startAutoSlide();
+        });
+
         indicators.forEach((indicator, index) => {
-            indicator.classList.toggle('active', index === currentIndex);
+            indicator.addEventListener('click', () => {
+                currentIndex = index;
+                updateSlides();
+                startAutoSlide();
+            });
         });
-    }
 
-    function nextSlide() {
-        currentIndex = getNextIndex();
+        const carruselContainer = document.querySelector('.carrusel-premio');
+        if (carruselContainer) {
+            carruselContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            carruselContainer.addEventListener('mouseleave', startAutoSlide);
+        }
+
         updateSlides();
-    }
-
-    function prevSlide() {
-        currentIndex = getPrevIndex();
-        updateSlides();
-    }
-
-    function goToSlide(index) {
-        currentIndex = index;
-        updateSlides();
-        resetAutoSlide();
-    }
-
-    function getNextIndex() {
-        return (currentIndex + 1) % slides.length;
-    }
-
-    function getPrevIndex() {
-        return (currentIndex - 1 + slides.length) % slides.length;
-    }
-
-    function startAutoSlide() {
-        stopAutoSlide(); // Evitar múltiples intervalos
-        slideInterval = setInterval(nextSlide, 5000);
-    }
-
-    function stopAutoSlide() {
-        clearInterval(slideInterval);
-    }
-
-    function resetAutoSlide() {
-        stopAutoSlide();
         startAutoSlide();
     }
 
-    // Añadir animaciones CSS adicionales
+    // Animaciones CSS
     const style = document.createElement('style');
     style.innerHTML = `
         @keyframes fadeNumberChange {
@@ -560,83 +475,6 @@ Adjunto comprobante de pago.`;
         }
     `;
     document.head.appendChild(style);
+
+    console.log('✅ Sistema de rifa cargado SIN bloqueos de seguridad');
 });
-
-// Funcionalidad para los modales
-document.addEventListener('DOMContentLoaded', function () {
-    // Referencias a elementos de modales
-    const termsModal = document.getElementById('terms-modal');
-    const privacyModal = document.getElementById('privacy-modal');
-    const openTermsBtn = document.getElementById('open-terms-modal');
-    const openPrivacyBtn = document.getElementById('open-privacy-modal');
-    const closeButtons = document.querySelectorAll('.close-modal');
-
-    // Abrir modal de términos
-    if (openTermsBtn) {
-        openTermsBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (termsModal) termsModal.style.display = 'block';
-        });
-    }
-
-    // Abrir modal de privacidad
-    if (openPrivacyBtn) {
-        openPrivacyBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (privacyModal) privacyModal.style.display = 'block';
-        });
-    }
-
-    // Cerrar modales con el botón X
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            if (termsModal) termsModal.style.display = 'none';
-            if (privacyModal) privacyModal.style.display = 'none';
-        });
-    });
-
-    // Cerrar modales al hacer clic fuera del contenido
-    window.addEventListener('click', function (event) {
-        if (event.target === termsModal) {
-            termsModal.style.display = 'none';
-        }
-        if (event.target === privacyModal) {
-            privacyModal.style.display = 'none';
-        }
-    });
-});
-
-// Crear partículas adicionales aleatoriamente
-function createParticles() {
-    const particlesContainer = document.querySelector('.particles');
-    const numberOfParticles = 15;
-
-    for (let i = 0; i < numberOfParticles; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-
-        // Posición aleatoria
-        const posX = Math.random() * 100;
-        const posY = Math.random() * 100;
-
-        // Tamaño aleatorio
-        const size = Math.random() * 15 + 5;
-
-        // Duración aleatoria de la animación
-        const duration = Math.random() * 20 + 10;
-
-        // Retraso aleatorio
-        const delay = Math.random() * 10;
-
-        // Aplicar estilos
-        particle.style.top = `${posY}%`;
-        particle.style.left = `${posX}%`;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.opacity = Math.random() * 0.5 + 0.3;
-        particle.style.animation = `float ${duration}s linear infinite`;
-        particle.style.animationDelay = `${delay}s`;
-
-        particlesContainer.appendChild(particle);
-    }
-}
