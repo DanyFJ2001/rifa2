@@ -1,12 +1,90 @@
-// script.js - Versión SIN bloqueos de seguridad (para pruebas)
+// script.js - VERSIÓN OPTIMIZADA Y SEGURA
 document.addEventListener('DOMContentLoaded', function () {
+
+    // SISTEMA DE SEGURIDAD BÁSICO INTEGRADO
+    const SecuritySystem = {
+        sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        
+        // Rate limiting mejorado
+        rateLimits: new Map(),
+        
+        checkRateLimit(action, maxRequests = 5, windowMs = 60000) {
+            const now = Date.now();
+            const key = action;
+            
+            if (!this.rateLimits.has(key)) {
+                this.rateLimits.set(key, []);
+            }
+            
+            const requests = this.rateLimits.get(key);
+            const recentRequests = requests.filter(time => time > now - windowMs);
+            
+            if (recentRequests.length >= maxRequests) {
+                return false;
+            }
+            
+            recentRequests.push(now);
+            this.rateLimits.set(key, recentRequests);
+            return true;
+        },
+        
+        // Sanitización mejorada
+        sanitizeInput(input) {
+            if (typeof input !== 'string') return '';
+            return input
+                .replace(/[<>\"'&\x00-\x1f\x7f-\x9f]/g, '') // XSS y caracteres de control
+                .replace(/javascript:/gi, '') // URLs javascript
+                .replace(/data:/gi, '') // Data URLs
+                .trim()
+                .substring(0, 100);
+        },
+        
+        // Validación completa
+        validateUserData(data) {
+            const errors = [];
+            
+            // Validar nombre
+            if (!data.nombre || data.nombre.length < 2) {
+                errors.push('Nombre debe tener al menos 2 caracteres');
+            } else if (data.nombre.length > 50) {
+                errors.push('Nombre demasiado largo (máximo 50 caracteres)');
+            } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.-]+$/.test(data.nombre)) {
+                errors.push('Nombre contiene caracteres no válidos');
+            }
+            
+            // Validar email
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!data.email || !emailRegex.test(data.email)) {
+                errors.push('Email inválido');
+            } else if (data.email.length > 100) {
+                errors.push('Email demasiado largo');
+            }
+            
+            // Validar teléfono
+            if (!data.telefono) {
+                errors.push('Teléfono es requerido');
+            } else {
+                const telefonoLimpio = data.telefono.replace(/\D/g, '');
+                if (telefonoLimpio.length < 8 || telefonoLimpio.length > 15) {
+                    errors.push('Teléfono debe tener entre 8 y 15 dígitos');
+                }
+            }
+            
+            return errors;
+        },
+        
+        // Log básico (sin Firebase para mantener simplicidad)
+        logActivity(action, details = {}) {
+            console.log(`[${new Date().toISOString()}] ${action}:`, details);
+        }
+    };
 
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const numerosRef = database.ref('numeros');
 
-    // Referencias a elementos del DOM
+    // Referencias DOM
     const formStep1 = document.getElementById('form-step-1');
     const formStep2 = document.getElementById('form-step-2');
     const formStep3 = document.getElementById('form-step-3');
@@ -19,10 +97,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedList = document.getElementById('selected-list');
     const totalPagar = document.getElementById('total-pagar');
 
-    // Variables globales
-    const NUMERO_INICIAL = 2001;
-    const NUMERO_FINAL = 4000;
-    const TOTAL_NUMEROS = NUMERO_FINAL - NUMERO_INICIAL + 1;
+    // Configuración
+    const CONFIG = {
+        NUMERO_INICIAL: 2001,
+        NUMERO_FINAL: 4000,
+        MAX_NUMEROS: 10,
+        PRECIO_NUMERO: 3.00
+    };
+
+    const TOTAL_NUMEROS = CONFIG.NUMERO_FINAL - CONFIG.NUMERO_INICIAL + 1;
+
+    // Estado de la aplicación
     let datosUsuario = {
         nombre: '',
         telefono: '',
@@ -30,142 +115,162 @@ document.addEventListener('DOMContentLoaded', function () {
         numerosSeleccionados: []
     };
 
-    // Limitar a 10 números seleccionados
-    const MAX_NUMEROS = 10;
-    const PRECIO_NUMERO = 3.00;
-
-    // Inicializar cuenta regresiva
+    // INICIALIZACIÓN
     initCountdown();
-
-    // Generar grid de números
     generarNumeros();
-
-    // Escuchar cambios en la base de datos
+    setupEventListeners();
+    
+    // Escuchar cambios en Firebase
     numerosRef.on('value', (snapshot) => {
-        actualizarNumeros(snapshot.val());
-        actualizarBarraProgreso(snapshot.val());
+        const data = snapshot.val();
+        if (data) {
+            actualizarNumeros(data);
+            actualizarBarraProgreso(data);
+        }
+    }, (error) => {
+        console.error('Error de conexión:', error);
+        showErrorMessage('Error de conexión. Verifica tu internet.');
     });
 
-    // EVENT LISTENERS SIN BLOQUEOS DE SEGURIDAD
-
-    btnSiguiente.addEventListener('click', function (e) {
-        e.preventDefault();
+    // EVENT LISTENERS
+    function setupEventListeners() {
         
-        // Obtener datos simples
-        const nombre = document.getElementById('nombre').value.trim();
-        const telefono = document.getElementById('telefono').value.trim();
-        const email = document.getElementById('email').value.trim();
-
-        // Validación básica sin bloqueos
-        if (!nombre || !telefono || !email) {
-            alert('Por favor, completa todos los campos');
-            return;
-        }
-
-        // Validación simple de email
-        if (!email.includes('@') || !email.includes('.')) {
-            alert('Por favor, ingresa un email válido');
-            return;
-        }
-
-        // Validación simple de teléfono
-        if (telefono.length < 8) {
-            alert('Por favor, ingresa un número de teléfono válido');
-            return;
-        }
-
-        // Guardar datos
-        datosUsuario.nombre = nombre;
-        datosUsuario.telefono = telefono;
-        datosUsuario.email = email;
-
-        console.log('Datos guardados:', datosUsuario);
-
-        // Cambiar al paso 2 SIN BLOQUEOS
-        transitionToStep(formStep1, formStep2);
-    });
-
-    btnVolver.addEventListener('click', function (e) {
-        e.preventDefault();
-        transitionToStep(formStep2, formStep1);
-    });
-
-    btnConfirmar.addEventListener('click', async function (e) {
-        e.preventDefault();
-        
-        if (datosUsuario.numerosSeleccionados.length === 0) {
-            alert('Por favor, selecciona al menos un número');
-            return;
-        }
-
-        // Mostrar loading
-        btnConfirmar.disabled = true;
-        btnConfirmar.textContent = 'PROCESANDO...';
-
-        try {
-            // Reservar números
-            const success = await reservarNumeros();
+        // Paso 1: Validar formulario
+        btnSiguiente.addEventListener('click', function (e) {
+            e.preventDefault();
             
-            if (success) {
-                const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
-                totalPagar.textContent = total.toFixed(2);
-                transitionToStep(formStep2, formStep3);
-            } else {
-                alert('Algunos números ya no están disponibles. La página se actualizará.');
-                setTimeout(() => window.location.reload(), 2000);
+            if (!SecuritySystem.checkRateLimit('form_submit', 3, 60000)) {
+                showErrorMessage('Demasiados intentos. Espera un momento.');
+                return;
             }
-        } catch (error) {
-            console.error('Error en reserva:', error);
-            alert('Error al procesar la reserva. Intenta nuevamente.');
-        } finally {
-            btnConfirmar.disabled = false;
-            btnConfirmar.textContent = 'CONFIRMAR';
-        }
-    });
 
-    btnWhatsapp.addEventListener('click', function (e) {
-        e.preventDefault();
-        enviarWhatsapp();
-    });
+            const nombreRaw = document.getElementById('nombre').value;
+            const telefonoRaw = document.getElementById('telefono').value;
+            const emailRaw = document.getElementById('email').value;
 
-    // FUNCIONES SIN BLOQUEOS
+            const nombre = SecuritySystem.sanitizeInput(nombreRaw);
+            const telefono = SecuritySystem.sanitizeInput(telefonoRaw);
+            const email = SecuritySystem.sanitizeInput(emailRaw);
+
+            const errors = SecuritySystem.validateUserData({ nombre, telefono, email });
+
+            if (errors.length > 0) {
+                showErrorMessage(errors.join('\n'));
+                SecuritySystem.logActivity('form_validation_failed', { errors });
+                return;
+            }
+
+            datosUsuario = { nombre, telefono, email, numerosSeleccionados: [] };
+            SecuritySystem.logActivity('form_step1_completed', { email });
+            transitionToStep(formStep1, formStep2);
+        });
+
+        // Volver al paso anterior
+        btnVolver.addEventListener('click', function (e) {
+            e.preventDefault();
+            transitionToStep(formStep2, formStep1);
+        });
+
+        // Confirmar reserva
+        btnConfirmar.addEventListener('click', async function (e) {
+            e.preventDefault();
+            
+            if (!SecuritySystem.checkRateLimit('reservation', 1, 300000)) {
+                showErrorMessage('Solo puedes hacer una reserva cada 5 minutos.');
+                return;
+            }
+
+            if (datosUsuario.numerosSeleccionados.length === 0) {
+                showErrorMessage('Selecciona al menos un número');
+                return;
+            }
+
+            const numerosValidos = datosUsuario.numerosSeleccionados.every(num => 
+                Number.isInteger(num) && 
+                num >= CONFIG.NUMERO_INICIAL && 
+                num <= CONFIG.NUMERO_FINAL
+            );
+
+            if (!numerosValidos) {
+                showErrorMessage('Números seleccionados inválidos');
+                return;
+            }
+
+            btnConfirmar.disabled = true;
+            btnConfirmar.textContent = 'PROCESANDO...';
+
+            try {
+                const success = await reservarNumeros();
+                
+                if (success) {
+                    const total = datosUsuario.numerosSeleccionados.length * CONFIG.PRECIO_NUMERO;
+                    totalPagar.textContent = total.toFixed(2);
+                    SecuritySystem.logActivity('reservation_success', {
+                        numbers: datosUsuario.numerosSeleccionados,
+                        total
+                    });
+                    transitionToStep(formStep2, formStep3);
+                } else {
+                    showErrorMessage('Algunos números ya no están disponibles. Recargando...');
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            } catch (error) {
+                showErrorMessage('Error al procesar la reserva. Intenta nuevamente.');
+                SecuritySystem.logActivity('reservation_error', { error: error.message });
+            } finally {
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = 'CONFIRMAR';
+            }
+        });
+
+        // Enviar WhatsApp
+        btnWhatsapp.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            if (!SecuritySystem.checkRateLimit('whatsapp', 2, 300000)) {
+                showErrorMessage('Espera antes de enviar nuevamente.');
+                return;
+            }
+            
+            enviarWhatsapp();
+        });
+    }
+
+    // FUNCIONES PRINCIPALES
 
     function transitionToStep(fromStep, toStep) {
-        console.log('Cambiando de paso:', fromStep.id, 'a', toStep.id);
+        if (!fromStep || !toStep) return;
         
         fromStep.style.animation = 'fadeOut 0.3s forwards';
         setTimeout(() => {
             fromStep.style.display = 'none';
             toStep.style.display = 'block';
             toStep.style.animation = 'fadeIn 0.3s forwards';
-            
-            console.log('Transición completada a:', toStep.id);
         }, 300);
     }
 
     function initCountdown() {
         const countDownDate = new Date("June 30, 2025 19:00:00").getTime();
 
-        const x = setInterval(function () {
+        setInterval(() => {
             const now = new Date().getTime();
             const distance = countDownDate - now;
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            updateCountdownDigit("days", Math.max(0, days));
-            updateCountdownDigit("hours", Math.max(0, hours));
-            updateCountdownDigit("minutes", Math.max(0, minutes));
-            updateCountdownDigit("seconds", Math.max(0, seconds));
-
-            if (distance < 0) {
-                clearInterval(x);
-                document.getElementById("days").textContent = "00";
-                document.getElementById("hours").textContent = "00";
-                document.getElementById("minutes").textContent = "00";
-                document.getElementById("seconds").textContent = "00";
+                updateCountdownDigit("days", days);
+                updateCountdownDigit("hours", hours);
+                updateCountdownDigit("minutes", minutes);
+                updateCountdownDigit("seconds", seconds);
+            } else {
+                updateCountdownDigit("days", 0);
+                updateCountdownDigit("hours", 0);
+                updateCountdownDigit("minutes", 0);
+                updateCountdownDigit("seconds", 0);
             }
         }, 1000);
     }
@@ -174,39 +279,53 @@ document.addEventListener('DOMContentLoaded', function () {
         const element = document.getElementById(id);
         if (!element) return;
 
-        const currentValue = element.textContent;
-        const newValue = value.toString().padStart(2, '0');
-
-        if (currentValue !== newValue) {
+        const newValue = Math.max(0, value).toString().padStart(2, '0');
+        
+        if (element.textContent !== newValue) {
             element.style.animation = 'none';
             element.offsetHeight;
             element.textContent = newValue;
-            element.style.animation = 'fadeNumberChange 0.5s';
+            element.style.animation = 'flipDigit 0.5s ease-in-out';
         }
     }
 
     function generarNumeros() {
+        if (!gridNumeros) return;
+        
         gridNumeros.innerHTML = '';
+        const fragment = document.createDocumentFragment();
 
-        for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
+        for (let i = CONFIG.NUMERO_INICIAL; i <= CONFIG.NUMERO_FINAL; i++) {
             const numeroElement = document.createElement('div');
-            numeroElement.classList.add('numero');
+            numeroElement.className = 'numero';
             numeroElement.textContent = i;
             numeroElement.setAttribute('data-numero', i);
+            numeroElement.setAttribute('role', 'button');
+            numeroElement.setAttribute('tabindex', '0');
+            numeroElement.setAttribute('aria-label', `Número ${i}`);
 
-            numeroElement.addEventListener('click', function () {
-                seleccionarNumero(this);
+            numeroElement.addEventListener('click', () => seleccionarNumero(numeroElement));
+            
+            numeroElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    seleccionarNumero(numeroElement);
+                }
             });
 
-            gridNumeros.appendChild(numeroElement);
+            fragment.appendChild(numeroElement);
         }
 
-        // Inicializar todos los números en Firebase si no existen
-        numerosRef.once('value', snapshot => {
-            const data = snapshot.val();
-            if (!data) {
+        gridNumeros.appendChild(fragment);
+        inicializarNumerosFirebase();
+    }
+
+    async function inicializarNumerosFirebase() {
+        try {
+            const snapshot = await numerosRef.once('value');
+            if (!snapshot.exists()) {
                 const batch = {};
-                for (let i = NUMERO_INICIAL; i <= NUMERO_FINAL; i++) {
+                for (let i = CONFIG.NUMERO_INICIAL; i <= CONFIG.NUMERO_FINAL; i++) {
                     batch[i] = {
                         estado: 'libre',
                         usuario: null,
@@ -214,89 +333,85 @@ document.addEventListener('DOMContentLoaded', function () {
                         email: null
                     };
                 }
-                numerosRef.set(batch);
+                await numerosRef.set(batch);
+                SecuritySystem.logActivity('firebase_initialized');
             }
-        });
+        } catch (error) {
+            console.error('Error inicializando Firebase:', error);
+        }
     }
 
     function seleccionarNumero(elemento) {
-        const numero = parseInt(elemento.getAttribute('data-numero'));
-
-        // Verificar si el número está disponible
-        if (elemento.classList.contains('reservado') || elemento.classList.contains('pagado')) {
-            alert('Este número ya no está disponible');
+        if (!SecuritySystem.checkRateLimit('number_selection', 50, 60000)) {
+            showErrorMessage('Demasiadas selecciones. Espera un momento.');
             return;
         }
 
-        // Verificar si ya está seleccionado
+        const numero = parseInt(elemento.getAttribute('data-numero'));
+        
+        if (isNaN(numero)) return;
+
+        if (elemento.classList.contains('reservado') || elemento.classList.contains('pagado')) {
+            showErrorMessage('Este número ya no está disponible');
+            return;
+        }
+
         if (elemento.classList.contains('selected')) {
-            // Quitar de seleccionados
+            // Deseleccionar
             elemento.classList.remove('selected');
             const index = datosUsuario.numerosSeleccionados.indexOf(numero);
             if (index > -1) {
                 datosUsuario.numerosSeleccionados.splice(index, 1);
             }
         } else {
-            // Verificar límite de números
-            if (datosUsuario.numerosSeleccionados.length >= MAX_NUMEROS) {
-                alert(`Solo puedes seleccionar un máximo de ${MAX_NUMEROS} números.`);
+            // Seleccionar
+            if (datosUsuario.numerosSeleccionados.length >= CONFIG.MAX_NUMEROS) {
+                showErrorMessage(`Máximo ${CONFIG.MAX_NUMEROS} números permitidos`);
                 return;
             }
 
-            // Añadir a seleccionados
             elemento.classList.add('selected');
             datosUsuario.numerosSeleccionados.push(numero);
         }
 
-        // Actualizar lista de seleccionados
         actualizarListaSeleccionados();
     }
 
     function actualizarNumeros(data) {
-        if (!data) return;
+        if (!data || !gridNumeros) return;
 
-        for (const num in data) {
-            const numeroElement = document.querySelector(`.numero[data-numero="${num}"]`);
-            if (numeroElement) {
-                numeroElement.classList.remove('libre', 'reservado', 'pagado');
-                numeroElement.classList.add(data[num].estado);
-
+        Object.keys(data).forEach(num => {
+            const elemento = gridNumeros.querySelector(`[data-numero="${num}"]`);
+            if (elemento && data[num]?.estado) {
+                elemento.className = `numero ${data[num].estado}`;
+                
                 if (data[num].estado !== 'libre') {
-                    numeroElement.style.cursor = 'not-allowed';
+                    elemento.style.cursor = 'not-allowed';
+                    elemento.setAttribute('aria-disabled', 'true');
                 } else {
-                    numeroElement.style.cursor = 'pointer';
+                    elemento.style.cursor = 'pointer';
+                    elemento.removeAttribute('aria-disabled');
                 }
             }
-        }
+        });
     }
 
     function actualizarBarraProgreso(data) {
         if (!data) return;
 
-        let reservados = 0;
-        let pagados = 0;
-
-        for (const num in data) {
-            if (data[num].estado === 'reservado') reservados++;
-            if (data[num].estado === 'pagado') pagados++;
-        }
-
-        const total = TOTAL_NUMEROS;
+        const estados = Object.values(data);
+        const reservados = estados.filter(item => item.estado === 'reservado').length;
+        const pagados = estados.filter(item => item.estado === 'pagado').length;
         const vendidos = reservados + pagados;
-        const porcentaje = (vendidos / total) * 100;
+        const porcentaje = Math.min((vendidos / TOTAL_NUMEROS) * 100, 100);
 
         const progressBar = document.querySelector('.progreso');
         const progressMarker = document.querySelector('.progreso-marker');
+        const porcentajeText = document.querySelector('.porcentaje-text strong');
 
-        if (progressBar && progressMarker) {
-            progressBar.style.width = `${porcentaje}%`;
-            progressMarker.style.left = `${porcentaje}%`;
-
-            const porcentajeText = document.querySelector('.porcentaje-text strong');
-            if (porcentajeText) {
-                porcentajeText.textContent = `${porcentaje.toFixed(2)}%`;
-            }
-        }
+        if (progressBar) progressBar.style.width = `${porcentaje}%`;
+        if (progressMarker) progressMarker.style.left = `${porcentaje}%`;
+        if (porcentajeText) porcentajeText.textContent = `${porcentaje.toFixed(2)}%`;
     }
 
     function actualizarListaSeleccionados() {
@@ -305,59 +420,47 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedList) {
             selectedList.textContent = datosUsuario.numerosSeleccionados.join(', ');
         }
+        
         if (numeroSeleccionadoInput) {
             numeroSeleccionadoInput.value = datosUsuario.numerosSeleccionados.join(', ');
         }
 
-        const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
+        const total = datosUsuario.numerosSeleccionados.length * CONFIG.PRECIO_NUMERO;
         if (totalPagar) {
             totalPagar.textContent = total.toFixed(2);
         }
     }
 
     async function reservarNumeros() {
-        console.log('Iniciando reserva para números:', datosUsuario.numerosSeleccionados);
-        
-        const reservationPromises = datosUsuario.numerosSeleccionados.map(numero => {
-            return numerosRef.child(numero).transaction(currentData => {
-                if (currentData === null || currentData.estado === 'libre') {
-                    return {
-                        estado: 'reservado',
-                        usuario: datosUsuario.nombre,
-                        telefono: datosUsuario.telefono,
-                        email: datosUsuario.email,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    };
-                } else {
-                    return; // undefined = abortar
-                }
-            });
-        });
-
         try {
-            const results = await Promise.all(reservationPromises);
-            
-            const allSuccessful = results.every(result => 
-                result.committed && result.snapshot.exists()
-            );
+            const promises = datosUsuario.numerosSeleccionados.map(numero => {
+                return numerosRef.child(numero).transaction(currentData => {
+                    if (currentData === null || currentData.estado === 'libre') {
+                        return {
+                            estado: 'reservado',
+                            usuario: datosUsuario.nombre,
+                            telefono: datosUsuario.telefono,
+                            email: datosUsuario.email,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            sessionId: SecuritySystem.sessionId
+                        };
+                    }
+                    return undefined; // Abortar si ya está tomado
+                }, undefined, false);
+            });
 
-            if (!allSuccessful) {
-                console.warn('Algunas reservas fallaron');
-                return false;
-            }
-
-            console.log('Reserva exitosa');
-            return true;
+            const results = await Promise.all(promises);
+            return results.every(result => result.committed && result.snapshot.exists());
 
         } catch (error) {
-            console.error('Error en transacciones:', error);
+            console.error('Error en reserva:', error);
             return false;
         }
     }
 
     function enviarWhatsapp() {
         const telefonoOrganizador = "593967871708";
-        const total = datosUsuario.numerosSeleccionados.length * PRECIO_NUMERO;
+        const total = datosUsuario.numerosSeleccionados.length * CONFIG.PRECIO_NUMERO;
         
         const mensaje = `🎟️ RESERVA DE NÚMEROS - SUZUKI FORSA 1
 
@@ -378,9 +481,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const whatsappUrl = `https://wa.me/${telefonoOrganizador}?text=${encodeURIComponent(mensaje)}`;
         window.open(whatsappUrl, '_blank');
+        
+        SecuritySystem.logActivity('whatsapp_sent', {
+            numbers: datosUsuario.numerosSeleccionados.length,
+            total
+        });
     }
 
-    // Carrusel
+    function showErrorMessage(message) {
+        const safeMessage = SecuritySystem.sanitizeInput(message);
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'error-overlay';
+        overlay.innerHTML = `
+            <div class="error-modal">
+                <h3>⚠️ Atención</h3>
+                <p>${safeMessage}</p>
+                <button onclick="this.closest('.error-overlay').remove()">
+                    Entendido
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+
+        setTimeout(() => overlay.remove(), 8000);
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') overlay.remove();
+        }, { once: true });
+    }
+
+    // CARRUSEL
     initCarrusel();
 
     function initCarrusel() {
@@ -396,14 +528,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function updateSlides() {
             slides.forEach((slide, index) => {
-                slide.classList.remove('active', 'prev');
-                if (index === currentIndex) {
-                    slide.classList.add('active');
-                } else if (index === getPrevIndex()) {
-                    slide.classList.add('prev');
-                }
+                slide.classList.toggle('active', index === currentIndex);
             });
-
             indicators.forEach((indicator, index) => {
                 indicator.classList.toggle('active', index === currentIndex);
             });
@@ -414,29 +540,25 @@ document.addEventListener('DOMContentLoaded', function () {
             updateSlides();
         }
 
-        function prevSlide() {
-            currentIndex = getPrevIndex();
-            updateSlides();
-        }
-
-        function getPrevIndex() {
-            return (currentIndex - 1 + slides.length) % slides.length;
-        }
-
         function startAutoSlide() {
             clearInterval(slideInterval);
-            slideInterval = setInterval(nextSlide, 5000);
+            slideInterval = setInterval(nextSlide, 4000);
         }
 
-        if (prevBtn) prevBtn.addEventListener('click', () => {
-            prevSlide();
-            startAutoSlide();
-        });
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+                updateSlides();
+                startAutoSlide();
+            });
+        }
 
-        if (nextBtn) nextBtn.addEventListener('click', () => {
-            nextSlide();
-            startAutoSlide();
-        });
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                nextSlide();
+                startAutoSlide();
+            });
+        }
 
         indicators.forEach((indicator, index) => {
             indicator.addEventListener('click', () => {
@@ -446,35 +568,88 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        const carruselContainer = document.querySelector('.carrusel-premio');
-        if (carruselContainer) {
-            carruselContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
-            carruselContainer.addEventListener('mouseleave', startAutoSlide);
-        }
-
         updateSlides();
         startAutoSlide();
     }
 
-    // Animaciones CSS
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes fadeNumberChange {
-            0% { transform: translateY(-10px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
+    // ESTILOS CSS
+    const styles = `
+        @keyframes flipDigit {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
         }
         
         @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .error-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .error-modal h3 {
+            color: #e74c3c;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        
+        .error-modal p {
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+            white-space: pre-line;
+        }
+        
+        .error-modal button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .error-modal button:hover {
+            background: #2980b9;
         }
     `;
-    document.head.appendChild(style);
+    
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
 
-    console.log('✅ Sistema de rifa cargado SIN bloqueos de seguridad');
+    // Log inicial
+    SecuritySystem.logActivity('app_initialized', {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent.substring(0, 100)
+    });
 });
